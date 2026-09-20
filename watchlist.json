@@ -1,0 +1,26 @@
+{
+  "pollMinutes": 5,
+  "watches": [
+    {
+      "name": "POW! (FT) 0.15-0.27",
+      "market_hash_name": "★ Moto Gloves | POW! (Field-Tested)",
+      "minFloat": 0.15,
+      "maxFloat": 0.27,
+      "maxPrice": 82
+    },
+    {
+      "name": "POW! (MW) 0.07-0.15",
+      "market_hash_name": "★ Moto Gloves | POW! (Minimal Wear)",
+      "minFloat": 0.07,
+      "maxFloat": 0.15,
+      "maxPrice": 82
+    },
+    {
+      "name": "POW! (FN) 0.06-0.07",
+      "market_hash_name": "★ Moto Gloves | POW! (Factory New)",
+      "minFloat": 0.06,
+      "maxFloat": 0.07,
+      "maxPrice": 82
+    }
+  ]
+}

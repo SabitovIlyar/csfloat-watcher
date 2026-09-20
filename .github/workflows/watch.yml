@@ -1,0 +1,46 @@
+name: csfloat-watcher
+
+on:
+  schedule:
+    # GitHub допускает минимум 5 минут, но при нагрузке запускает с задержкой.
+    # 10 минут — честный компромисс, реально выходит 10–20.
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # кнопка ручного запуска во вкладке Actions
+
+permissions:
+  contents: write # нужно, чтобы коммитить seen.json обратно
+
+concurrency:
+  group: csfloat-watcher
+  cancel-in-progress: false # два прохода разом подрались бы за seen.json
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Проверить площадку
+        env:
+          CSFLOAT_API_KEY: ${{ secrets.CSFLOAT_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node watch.js --once
+
+      - name: Запомнить отправленное
+        run: |
+          if [ -n "$(git status --porcelain seen.json)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add seen.json
+            git commit -m "state: seen listings [skip ci]"
+            # Между проверкой и push мог пройти другой коммит.
+            git pull --rebase --autostash
+            git push
+          else
+            echo "нового ничего, состояние не изменилось"
+          fi

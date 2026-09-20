@@ -1,0 +1,5 @@
+# Линуксовые переводы строк в репозитории: CRLF ломает bash в GitHub Actions.
+* text=auto eol=lf
+*.yml text eol=lf
+*.js  text eol=lf
+*.json text eol=lf
