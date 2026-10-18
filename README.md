@@ -44,7 +44,7 @@ node watch.js
 
 ## watchlist.json
 
-Настроено под AK-47 | Crane Flight (Well-Worn), float 0.38–0.45, до $7.
+Настроено под AK-47 | Crane Flight (Well-Worn), float 0.38–0.45, до $8.
 (До 21.09.2026 — под ★ Moto Gloves | POW!, перчатка куплена.)
 
 **Важно:** износ входит в `market_hash_name`, поэтому диапазон float, который
