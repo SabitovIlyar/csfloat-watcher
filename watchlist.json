@@ -2,25 +2,18 @@
   "pollMinutes": 5,
   "watches": [
     {
-      "name": "POW! (FT) 0.15-0.27",
-      "market_hash_name": "★ Moto Gloves | POW! (Field-Tested)",
-      "minFloat": 0.15,
-      "maxFloat": 0.27,
-      "maxPrice": 82
+      "name": "Crane Flight (WW) 0.38-0.45",
+      "market_hash_name": "AK-47 | Crane Flight (Well-Worn)",
+      "minFloat": 0.38,
+      "maxFloat": 0.45,
+      "maxPrice": 8
     },
     {
-      "name": "POW! (MW) 0.07-0.15",
-      "market_hash_name": "★ Moto Gloves | POW! (Minimal Wear)",
-      "minFloat": 0.07,
-      "maxFloat": 0.15,
-      "maxPrice": 82
-    },
-    {
-      "name": "POW! (FN) 0.06-0.07",
-      "market_hash_name": "★ Moto Gloves | POW! (Factory New)",
-      "minFloat": 0.06,
-      "maxFloat": 0.07,
-      "maxPrice": 82
+      "name": "Crane Flight (BS) 0.45-0.50",
+      "market_hash_name": "AK-47 | Crane Flight (Battle-Scarred)",
+      "minFloat": 0.45,
+      "maxFloat": 0.50,
+      "maxPrice": 8
     }
   ]
 }
