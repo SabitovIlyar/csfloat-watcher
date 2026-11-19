@@ -1,25 +1,30 @@
 name: csfloat-watcher
 
 on:
-  # Раз в час = 720 запусков в месяц. Каждый запуск тарифицируется как целая
-  # минута (реально идёт ~17 секунд), а приватный репозиторий на бесплатном
-  # плане получает 2000 минут в месяц. Более частое расписание съело бы
-  # квоту за пару недель, после чего Actions молча перестал бы запускаться.
-  #
+  # Репозиторий публичный, поэтому минуты Actions бесплатны и без лимита.
+  # GitHub запускает cron «по возможности» и под нагрузкой пропускает
+  # старты (в приватном режиме из 24 запусков в сутки доходило 1–3).
+  # Поэтому один запуск живёт ~5 ч 40 мин и сам проверяет площадку каждые
+  # 10 минут, а ежечасный cron лишь подхватывает смену, когда прежний
+  # запуск закончился. Минута :17 — не :00, на :00 очередь у GitHub самая
+  # длинная.
   schedule:
-    - cron: '0 * * * *'
+    - cron: '17 * * * *'
   workflow_dispatch: # кнопка ручного запуска во вкладке Actions
 
 permissions:
   contents: write # нужно, чтобы коммитить seen.json обратно
 
 concurrency:
+  # Пока идёт смена, новый запуск ждёт в очереди (в очереди держится один,
+  # лишние GitHub отменяет сам) и стартует, как только прежняя закончится.
   group: csfloat-watcher
-  cancel-in-progress: false # два прохода разом подрались бы за seen.json
+  cancel-in-progress: false
 
 jobs:
   watch:
     runs-on: ubuntu-latest
+    timeout-minutes: 355 # жёсткий потолок GitHub — 360
     steps:
       - uses: actions/checkout@v4
 
@@ -27,23 +32,40 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Проверить площадку
+      - name: Следить ~5 ч 40 мин, проверка каждые 10 минут
         env:
           CSFLOAT_API_KEY: ${{ secrets.CSFLOAT_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: node watch.js --once
-
-      - name: Запомнить отправленное
+          SHIFT_MINUTES: 340
+          INTERVAL_SECONDS: 600
         run: |
-          if [ -n "$(git status --porcelain seen.json)" ]; then
-            git config user.name  "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add seen.json
-            git commit -m "state: seen listings [skip ci]"
-            # Между проверкой и push мог пройти другой коммит.
-            git pull --rebase --autostash
-            git push
-          else
-            echo "нового ничего, состояние не изменилось"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          end=$(( $(date +%s) + SHIFT_MINUTES * 60 ))
+          while :; do
+            # Подтянуть правки watchlist.json, сделанные во время смены.
+            git pull -q --rebase --autostash || echo "pull не удался, работаю с тем, что есть"
+
+            node watch.js --once || echo "проход завершился ошибкой, попробую в следующий раз"
+
+            if [ -n "$(git status --porcelain seen.json)" ]; then
+              git add seen.json
+              git commit -q -m "state: seen listings [skip ci]"
+              git pull -q --rebase --autostash && git push -q || echo "push не удался"
+            fi
+
+            [ $(( $(date +%s) + INTERVAL_SECONDS )) -lt "$end" ] || break
+            sleep "$INTERVAL_SECONDS"
+          done
+
+      - name: Не дать GitHub отключить расписание
+        # В публичном репозитории cron отключается после 60 дней без коммитов.
+        # Если подходящих лотов долго нет, seen.json не меняется — раз в
+        # ~50 дней делаем пустой коммит.
+        run: |
+          if [ $(( $(date +%s) - $(git log -1 --format=%ct) )) -gt $(( 50 * 86400 )) ]; then
+            git commit -q --allow-empty -m "keepalive: не дать отключить расписание [skip ci]"
+            git push -q
           fi
